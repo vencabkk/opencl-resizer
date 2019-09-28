@@ -12,8 +12,8 @@ include_directories(/opt/libjpeg-turbo/include)
 add_executable(resizer
         OpenCL/oclManager.cpp
         OpenCL/oclManager.h
-        BatchResizer.cpp
-        BatchResizer.h
+        Resizer.cpp
+        Resizer.h
         Image.cpp
         Image.h
         IO.cpp

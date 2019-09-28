@@ -8,7 +8,7 @@
 #include <string>
 #include <vector>
 
-class BatchResizer
+class Resizer
 {
 public:
 

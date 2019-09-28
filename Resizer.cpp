@@ -3,14 +3,14 @@
 // Copyright (c) 2015 Venca. All rights reserved.
 //
 
-#include "BatchResizer.h"
+#include "Resizer.h"
 #include "Profiler.h"
 #include "OpenCL/oclManager.h"
 #include "JPEGImage.h"
 #include "Utils.h"
 #include "OpenCL/kernels/resize_kernel.h"
 
-void BatchResizer::resize(const std::string& inputDir, const std::string& outputDir, float ratio, int quality, const std::string& algo)
+void Resizer::resize(const std::string& inputDir, const std::string& outputDir, float ratio, int quality, const std::string& algo)
 {
     Profiler::start("resize");
 
@@ -49,7 +49,7 @@ void BatchResizer::resize(const std::string& inputDir, const std::string& output
 
     if (samplingAlgo.empty())
     {
-        std::cerr << "Invalid resampling method." << std::endl;
+        std::cerr << "Invalid resampling method, available methods: [nn, linear, bicubic]" << std::endl;
         return;
     }
 

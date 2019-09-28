@@ -1,1 +1,1 @@
-# opencl-resizer
+# OpenCL resizer

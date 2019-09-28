@@ -8,7 +8,7 @@
 
 #include <iostream>
 #include <vector>
-#include "BatchResizer.h"
+#include "Resizer.h"
 
 int main(int argc, const char * argv[])
 {
@@ -64,7 +64,7 @@ int main(int argc, const char * argv[])
         }
     }
 
-    BatchResizer::resize(inputDir, outputDir, ratio, quality, algo);
+    Resizer::resize(inputDir, outputDir, ratio, quality, algo);
 
     return 0;
 }
