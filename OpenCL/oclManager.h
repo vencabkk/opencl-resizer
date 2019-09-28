@@ -29,24 +29,16 @@ public:
 
     bool createContext(DeviceType type);
 
-    void buildProgramFromSource(const std::string& filename, const std::string& buildOptions);
+    bool addKernelProgram(const std::string& kernel);
 
-	bool buildProgramFromBinary(const std::string& filename, const std::string& buildOptions);
-
-    void resizeImage(const Image& in, Image& out, float ratio);
-
-    static std::string getKernelDir();
+    void resizeImage(const Image& in, Image& out, float ratio, const std::string& programEntry);
 
 protected:
 
     const cl::Platform& getPlatform(DeviceType type) const;
     const cl::Device& getDevice(const cl::Context& context) const;
 
-	void writeBinary(const std::string& filename, const std::string& buildOptions);
-
-	bool readBinary(const std::string& filename);
-
-    char *getCLErrorString(cl_int err);
+    static char *getCLErrorString(cl_int err);
 
 	cl::ImageFormat getImageFormat(const Image&) const;
 

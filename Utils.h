@@ -37,7 +37,7 @@ public:
 
     static bool createDirectory(const std::string& path);
 
-    static void getFilesDir(const std::string& path, std::vector<std::string>& files, std::string mask);
+    static void getFilesDir(const std::string& path, std::vector<std::string>& files, const std::string& mask);
 
 	static std::string getExeDir();
 };

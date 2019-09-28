@@ -9,20 +9,20 @@
 #include <iostream>
 #include <vector>
 #include "BatchResizer.h"
-#include "Utils.h"
 
 int main(int argc, const char * argv[])
 {
     if (argc == 1)
     {
-        std::cout << "Example usage: resizer -output <output_dir> -input <input_dir> -ratio 0.8 -quality 90" << std::endl;
+        std::cout << "Example usage: resizer -output <output_dir> -input <input_dir> -ratio 0.8 -quality 90 -algo bicubic" << std::endl;
         return 1;
     }
 
-    std::vector<std::string> files;
+    std::string inputDir;
     std::string outputDir;
     auto ratio(1.0f);
     auto quality(100);
+    auto algo("bicubic");
 
     for (int i=1; i<argc; i++)
     {
@@ -51,16 +51,20 @@ int main(int argc, const char * argv[])
 
         if (arg == "-input")
         {
-            Utils::getFilesDir(argv[i+1], files, ".jpg");
+            inputDir = argv[i+1];
+            i++;
+            continue;
+        }
+
+        if (arg == "-algo")
+        {
+            algo = argv[i+1];
             i++;
             continue;
         }
     }
 
-    if (!files.empty())
-    {
-        BatchResizer::resize(files, outputDir, ratio, quality);
-    }
+    BatchResizer::resize(inputDir, outputDir, ratio, quality, algo);
 
     return 0;
 }

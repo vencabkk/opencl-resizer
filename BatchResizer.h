@@ -12,5 +12,17 @@ class BatchResizer
 {
 public:
 
-    static void resize(const std::vector<std::string>& files, std::string outputDir, float ratio, int quality);
+    /**
+     *
+     * @param inputDir input directory of images to be resized
+     * @param outputDir output directory where the images will be resized
+     * @param ratio ratio of resizing, eg. 0.5 will result in 50% smaller image
+     * @param quality quality of output JPEG <1, 100>
+     * @param options resizing algorithm
+     */
+    static void resize(const std::string& inputDir,
+                       const std::string& outputDir,
+                       float ratio,
+                       int quality,
+                       const std::string& options);
 };

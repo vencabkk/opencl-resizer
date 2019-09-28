@@ -3,7 +3,7 @@ __constant sampler_t sampler = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_CLAMP_T
 //#pragma OPENCL EXTENSION cl_amd_printf : enable
 //int printf(const char *restrict format, ...);
 
-struct SImage
+struct CLImage
 {
    uint Width;
    uint Height;
@@ -12,7 +12,7 @@ struct SImage
 //  nearest neighbour interpolation resizing
 // ----------------------------------------------------------------------------------
 //
-__kernel void resize_nn(__read_only image2d_t source, __write_only image2d_t dest, struct SImage src_img, struct SImage dst_img, float ratioX, float ratioY)
+__kernel void resize_nn(__read_only image2d_t source, __write_only image2d_t dest, struct CLImage src_img, struct CLImage dst_img, float ratioX, float ratioY)
 {
    const int gx = get_global_id(0);
    const int gy = get_global_id(1);
@@ -38,7 +38,7 @@ __kernel void resize_nn(__read_only image2d_t source, __write_only image2d_t des
 //  linear interpolation resizing
 // ----------------------------------------------------------------------------------
 //
-__kernel void resize_linear(__read_only image2d_t source, __write_only image2d_t dest, struct SImage src_img, struct SImage dst_img, float ratioX, float ratioY)
+__kernel void resize_linear(__read_only image2d_t source, __write_only image2d_t dest, struct CLImage src_img, struct CLImage dst_img, float ratioX, float ratioY)
 {
    const int gx = get_global_id(0);
    const int gy = get_global_id(1);
@@ -177,7 +177,7 @@ float4 sample_bicubic_border(__read_only image2d_t source, float2 pos, int2 SrcS
    return a0 + a1 * dy + a2 * dy * dy + a3 * dy * dy * dy;
 }
 
-__kernel void resize_bicubic(__read_only image2d_t source, __write_only image2d_t dest, struct SImage src_img, struct SImage dst_img, float ratioX, float ratioY)
+__kernel void resize_bicubic(__read_only image2d_t source, __write_only image2d_t dest, struct CLImage src_img, struct CLImage dst_img, float ratioX, float ratioY)
 {
    const int gx = get_global_id(0);
    const int gy = get_global_id(1);
@@ -296,7 +296,7 @@ float4 supersample_border(__read_only image2d_t source, float2 pos, int2 SrcSize
    return sum;
 }
 
-kernel void resize_supersample(__read_only image2d_t source, __write_only image2d_t dest, struct SImage src_img, struct SImage dst_img, float ratioX, float ratioY)
+kernel void resize_supersample(__read_only image2d_t source, __write_only image2d_t dest, struct CLImage src_img, struct CLImage dst_img, float ratioX, float ratioY)
 {
    const int gx = get_global_id(0);
    const int gy = get_global_id(1);

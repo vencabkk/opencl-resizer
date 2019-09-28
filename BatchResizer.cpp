@@ -8,10 +8,50 @@
 #include "OpenCL/oclManager.h"
 #include "JPEGImage.h"
 #include "Utils.h"
+#include "OpenCL/kernels/resize_kernel.h"
 
-void BatchResizer::resize(const std::vector<std::string>& files, std::string outputDir, float ratio, int quality)
+void BatchResizer::resize(const std::string& inputDir, const std::string& outputDir, float ratio, int quality, const std::string& algo)
 {
-    Profiler::start("BatchResizer::resize");
+    Profiler::start("resize");
+
+    std::vector<std::string> files;
+    auto outDir = outputDir;
+    std::string samplingAlgo;
+    Utils::getFilesDir(inputDir, files, ".jpg");
+
+    // check for input directory
+    if (files.empty())
+    {
+        std::cerr << "No input images found in: " << inputDir << std::endl;
+        return;
+    }
+
+    // check for output directory
+    if (outDir.empty())
+    {
+        outDir = files[0].substr(0, files[0].find_last_of("/\\") + 1) + "output";
+    }
+
+    if (!Utils::isDirectory(outDir))
+    {
+        Utils::createDirectory(outDir);
+    }
+
+    // check for re-sampling algorithm
+    for (const auto& e : entries)
+    {
+        if (e.find(algo) != std::string::npos)
+        {
+            samplingAlgo = e;
+            break;
+        }
+    }
+
+    if (samplingAlgo.empty())
+    {
+        std::cerr << "Invalid resampling method." << std::endl;
+        return;
+    }
 
     // init OpenCL
     oclManager ocl;
@@ -22,16 +62,10 @@ void BatchResizer::resize(const std::vector<std::string>& files, std::string out
     }
 
     // compile program
-    ocl.buildProgramFromSource(ocl.getKernelDir() + "/OpenCL/kernels/resize.cl", "");
-
-    if (outputDir.empty())
+    if (!ocl.addKernelProgram(resizeKernel))
     {
-        outputDir = files[0].substr(0, files[0].find_last_of("/\\") + 1) + "output";
-    }
-
-    if (!Utils::isDirectory(outputDir))
-    {
-        Utils::createDirectory(outputDir);
+        std::cerr << "Error building kernel." << std::endl;
+        return;
     }
 
     JPEGImage imageIn;
@@ -41,13 +75,13 @@ void BatchResizer::resize(const std::vector<std::string>& files, std::string out
     {
         if (imageIn.load(files[i]))
         {
-            ocl.resizeImage(imageIn, imageOut, ratio);
+            ocl.resizeImage(imageIn, imageOut, ratio, samplingAlgo);
 
-            std::string outFile = outputDir + files[i].substr(files[0].find_last_of("/\\"));
+            std::string outFile = outDir + files[i].substr(files[0].find_last_of("/\\"));
 
             imageOut.save(outFile, quality);
         }
     }
 
-    Profiler::stop("BatchResizer::resize");
+    Profiler::stop("resize");
 }

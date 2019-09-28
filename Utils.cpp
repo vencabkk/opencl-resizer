@@ -39,7 +39,7 @@ bool Utils::createDirectory(const std::string& path)
 #endif
 }
 
-void Utils::getFilesDir(const std::string& path, std::vector<std::string>& files, std::string mask)
+void Utils::getFilesDir(const std::string& path, std::vector<std::string>& files, const std::string& mask)
 {
     files.reserve(64);
 
