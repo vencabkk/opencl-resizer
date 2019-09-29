@@ -65,6 +65,7 @@ int main(int argc, const char * argv[])
     }
 
     Resizer::resize(inputDir, outputDir, ratio, quality, algo);
+    Resizer::resizeCV(inputDir, outputDir, ratio, quality, algo);
 
     return 0;
 }

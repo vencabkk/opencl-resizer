@@ -25,4 +25,10 @@ public:
                        float ratio,
                        int quality,
                        const std::string& options);
+
+    static void resizeCV(const std::string& inputDir,
+                       const std::string& outputDir,
+                       float ratio,
+                       int quality,
+                       const std::string& options);
 };

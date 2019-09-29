@@ -8,6 +8,8 @@ include_directories(.)
 include_directories(OpenCL)
 include_directories(OpenCL/kernels)
 include_directories(/opt/libjpeg-turbo/include)
+include_directories(/usr/local/Frameworks/opencv2.framework)
+
 
 add_executable(resizer
         OpenCL/oclManager.cpp
@@ -27,3 +29,4 @@ add_executable(resizer
 
 target_link_libraries(resizer "-framework OpenCL")
 target_link_libraries(resizer /opt/libjpeg-turbo/lib64/libturbojpeg.dylib)
+target_link_libraries(resizer /usr/local/Frameworks/opencv2.framework)

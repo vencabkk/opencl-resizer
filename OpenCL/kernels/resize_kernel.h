@@ -1,5 +1,10 @@
 #pragma once
 
+//
+// kernel based on OpenCLIPP library
+// https://github.com/CRVI/OpenCLIPP
+//
+
 // names of kernel entry points
 static const std::vector<std::string> entries = { "resize_nn", "resize_linear", "resize_bicubic" };
 

@@ -89,9 +89,9 @@ bool oclManager::createContext(DeviceType type)
 
         m_queue = cl::CommandQueue(m_context, device);
 
-        std::cout << "Using platform: " << platform.getInfo<CL_PLATFORM_VENDOR>() << std::endl;
-        std::cout << "Using device: " << device.getInfo<CL_DEVICE_NAME>() << std::endl;
-        std::cout << "Using version: " << device.getInfo<CL_DEVICE_VERSION>() << std::endl;
+//        std::cout << "Using platform: " << platform.getInfo<CL_PLATFORM_VENDOR>() << std::endl;
+//        std::cout << "Using device: " << device.getInfo<CL_DEVICE_NAME>() << std::endl;
+//        std::cout << "Using version: " << device.getInfo<CL_DEVICE_VERSION>() << std::endl;
 
         return true;
     }

@@ -1,3 +1,8 @@
+//
+// kernel based on OpenCLIPP library
+// https://github.com/CRVI/OpenCLIPP
+//
+
 __constant sampler_t sampler = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_CLAMP_TO_EDGE | CLK_FILTER_NEAREST;
 
 //#pragma OPENCL EXTENSION cl_amd_printf : enable
