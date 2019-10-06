@@ -5,9 +5,6 @@
 
 #pragma once
 
-//#define __NO_STD_VECTOR // Use cl::vector instead of STL version
-#define __CL_ENABLE_EXCEPTIONS
-
 #if defined(__APPLE__) || defined(__MACOSX)
 #include "cl.hpp"
 #else
@@ -35,8 +32,7 @@ public:
 
 protected:
 
-    const cl::Platform& getPlatform(DeviceType type) const;
-    const cl::Device& getDevice(const cl::Context& context) const;
+    void setupPlatform(DeviceType type);
 
     static char *getCLErrorString(cl_int err);
 
@@ -44,7 +40,8 @@ protected:
 
 	static const std::string preferredDeviceVendors[];
 
+	cl::Platform        m_platform;
+	cl::Device          m_device;
     cl::Context         m_context;
-    cl::CommandQueue    m_queue;
     cl::Program         m_program;
 };

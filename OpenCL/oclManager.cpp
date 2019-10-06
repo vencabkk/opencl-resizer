@@ -15,113 +15,76 @@ const std::string oclManager::preferredDeviceVendors[] =
     "AMD",
 };
 
-const cl::Platform& oclManager::getPlatform(DeviceType type) const
+void oclManager::setupPlatform(DeviceType type)
 {
-    // Get available platforms
-    VECTOR_CLASS<cl::Platform> platforms;
-    VECTOR_CLASS<cl::Device> devices;
+    std::vector<cl::Platform> platforms;
+    std::vector<cl::Device> devices;
     cl::Platform::get(&platforms);
 
-    if(platforms.empty())
-    {
-        throw cl::Error(1, "No OpenCL platforms were found");
-    }
+    cl::Platform defaulPlatform;
+    cl::Device defaultDevice;
 
-    int platformID = -1;
-
-    for(auto i = 0; i < platforms.size(); i++)
+    for (auto &p : platforms)
     {
         try
         {
-            platforms[i].getDevices(type, &devices);
-            platformID = i;
+            p.getDevices(type, &devices);
+            defaulPlatform = p;
             break;
         }
-        catch(cl::Error& e)
+        catch (...)
         {
             continue;
         }
     }
 
-    if(platformID == -1)
-    {
-        throw cl::Error(1, "No compatible OpenCL platform found");
-    }
+    m_platform = defaulPlatform;
 
-    return platforms[platformID];
-}
-
-const cl::Device& oclManager::getDevice(const cl::Context& context) const
-{
-    // Select device and create a command queue for it
-    VECTOR_CLASS<cl::Device> devices = context.getInfo<CL_CONTEXT_DEVICES>();
-
-    for (const auto& device : devices)
+    for (auto &d : devices)
     {
         for (const auto& deviceVendor : preferredDeviceVendors)
         {
-            if (device.getInfo<CL_DEVICE_VENDOR>().find(deviceVendor) != std::string::npos)
+            if (d.getInfo<CL_DEVICE_VENDOR>().find(deviceVendor) != std::string::npos)
             {
-                return device;
+                defaultDevice = d;
             }
         }
     }
 
-    return devices[0];
+    m_device = defaultDevice;
 }
 
 bool oclManager::createContext(DeviceType type)
 {
     try
     {
-        auto platform = getPlatform(type);
+        setupPlatform(type);
 
-        // Use the preferred platform and create a context
-        cl_context_properties cps[] = {
-                CL_CONTEXT_PLATFORM,
-                (cl_context_properties)(platform)(),
-                0
-        };
+        m_context = cl::Context({m_device});
 
-        m_context = cl::Context(type, cps);
-
-        auto device = getDevice(m_context);
-
-        m_queue = cl::CommandQueue(m_context, device);
-
-//        std::cout << "Using platform: " << platform.getInfo<CL_PLATFORM_VENDOR>() << std::endl;
-//        std::cout << "Using device: " << device.getInfo<CL_DEVICE_NAME>() << std::endl;
-//        std::cout << "Using version: " << device.getInfo<CL_DEVICE_VERSION>() << std::endl;
+        std::cout << "Using platform: " << m_platform.getInfo<CL_PLATFORM_VENDOR>() << std::endl;
+        std::cout << "Using device: " << m_device.getInfo<CL_DEVICE_NAME>() << std::endl;
+        std::cout << "Using version: " << m_device.getInfo<CL_DEVICE_VERSION>() << std::endl;
 
         return true;
     }
-    catch(cl::Error& error)
+    catch(...)
     {
-        std::cerr << "Failed to create an OpenCL context!" << std::endl << error.what() << std::endl;
+        std::cerr << "Failed to create an OpenCL context!" << std::endl << std::endl;
         return false;
     }
 }
 
 bool oclManager::addKernelProgram(const std::string &kernel)
 {
-    cl::Program::Sources source(1, std::make_pair(kernel.c_str(), kernel.length()+1));
+    m_program = cl::Program(kernel);
 
-    // Make program of the source code in the m_context
-    m_program = cl::Program(m_context, source);
-
-    VECTOR_CLASS<cl::Device> devices = m_context.getInfo<CL_CONTEXT_DEVICES>();
-
-    // Build program for these specific devices
     try
     {
-        m_program.build(devices);
+        m_program.build();
     }
-    catch(cl::Error& error)
-    {
-        if(error.err() == CL_BUILD_PROGRAM_FAILURE)
-        {
-            std::cout << "Build log:" << std::endl << m_program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(devices[0]) << std::endl;
-        }
+    catch (...) {
+        std::cout << "Error building: " << m_program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(m_device) << std::endl;
         return false;
     }
 
@@ -159,7 +122,7 @@ void oclManager::resizeImage(const Image& in, Image& out, float ratio, const std
     kernel.setArg(4, ratio);
     kernel.setArg(5, ratio);
 
-    m_queue.enqueueNDRangeKernel(
+    cl::CommandQueue::getDefault().enqueueNDRangeKernel(
             kernel,
             cl::NullRange,
             cl::NDRange(Utils::maximum(sImageIn.Width, sImageOut.Width), Utils::maximum(sImageIn.Width, sImageOut.Height)),
@@ -177,7 +140,7 @@ void oclManager::resizeImage(const Image& in, Image& out, float ratio, const std
 
     const unsigned int size (sImageOut.Width*sImageOut.Height*in.getChannels());
     out.setData(new unsigned char[size], size, sImageOut.Width, sImageOut.Height);
-    m_queue.enqueueReadImage(clImageOut, CL_TRUE, origin, region, 0, 0, (void*)out.getData().data());
+    cl::CommandQueue::getDefault().enqueueReadImage(clImageOut, CL_TRUE, origin, region, 0, 0, (void*)out.getData().data());
 }
 
 cl::ImageFormat oclManager::getImageFormat(const Image& img) const
