@@ -13,6 +13,7 @@ const std::string oclManager::preferredDeviceVendors[] =
 {
     "NVIDIA",
     "AMD",
+    "Advanced Micro Devices"
 };
 
 void oclManager::setupPlatform(DeviceType type)
@@ -21,37 +22,30 @@ void oclManager::setupPlatform(DeviceType type)
     std::vector<cl::Device> devices;
     cl::Platform::get(&platforms);
 
-    cl::Platform defaulPlatform;
-    cl::Device defaultDevice;
-
     for (auto &p : platforms)
     {
         try
         {
             p.getDevices(type, &devices);
-            defaulPlatform = p;
-            break;
+
+            for (auto &d : devices)
+            {
+                for (const auto& deviceVendor : preferredDeviceVendors)
+                {
+                    if (d.getInfo<CL_DEVICE_VENDOR>().find(deviceVendor) != std::string::npos)
+                    {
+                        m_platform = p;
+                        m_device = d;
+                        break;
+                    }
+                }
+            }
         }
         catch (...)
         {
             continue;
         }
     }
-
-    m_platform = defaulPlatform;
-
-    for (auto &d : devices)
-    {
-        for (const auto& deviceVendor : preferredDeviceVendors)
-        {
-            if (d.getInfo<CL_DEVICE_VENDOR>().find(deviceVendor) != std::string::npos)
-            {
-                defaultDevice = d;
-            }
-        }
-    }
-
-    m_device = defaultDevice;
 }
 
 bool oclManager::createContext(DeviceType type)
