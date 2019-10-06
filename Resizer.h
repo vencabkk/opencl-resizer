@@ -7,6 +7,7 @@
 
 #include <string>
 #include <vector>
+#include <unordered_map>
 
 class Resizer
 {
@@ -20,15 +21,17 @@ public:
      * @param quality quality of output JPEG <1, 100>
      * @param options resizing algorithm
      */
-    static void resize(const std::string& inputDir,
-                       const std::string& outputDir,
-                       float ratio,
-                       int quality,
-                       const std::string& options);
+    static void resizeCL(const std::string& inputDir,
+                         const std::string& outputDir,
+                         float ratio,
+                         int quality,
+                         const std::string& options,
+                         std::unordered_map<std::string, float>& profiler);
 
     static void resizeCV(const std::string& inputDir,
                        const std::string& outputDir,
                        float ratio,
                        int quality,
-                       const std::string& options);
+                       const std::string& options,
+                       std::unordered_map<std::string, float>& profiler);
 };

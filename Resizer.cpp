@@ -10,10 +10,8 @@
 #include "Utils.h"
 #include "OpenCL/kernels/resize_kernel.h"
 
-void Resizer::resize(const std::string& inputDir, const std::string& outputDir, float ratio, int quality, const std::string& algo)
+void Resizer::resizeCL(const std::string& inputDir, const std::string& outputDir, float ratio, int quality, const std::string& options, std::unordered_map<std::string, float>& profiler)
 {
-    Profiler::start("resizeCL");
-
     std::vector<std::string> files;
     auto outDir = outputDir;
     std::string samplingAlgo;
@@ -40,7 +38,7 @@ void Resizer::resize(const std::string& inputDir, const std::string& outputDir, 
     // check for re-sampling algorithm
     for (const auto& e : entries)
     {
-        if (e.find(algo) != std::string::npos)
+        if (e.find(options) != std::string::npos)
         {
             samplingAlgo = e;
             break;
@@ -71,19 +69,34 @@ void Resizer::resize(const std::string& inputDir, const std::string& outputDir, 
     JPEGImage imageIn;
     JPEGImage imageOut;
 
+    auto readProf = 0;
+    auto writeProf = 0;
+    auto resizeProf = 0;
+
     for (int i=0; i<files.size(); i++)
     {
+        profiler["op"] += 1;
+
+        auto r = Profiler::start();
         if (imageIn.load(files[i]))
         {
+            readProf += Profiler::stop(r);
+
+            auto res = Profiler::start();
             ocl.resizeImage(imageIn, imageOut, ratio, samplingAlgo);
+            resizeProf += Profiler::stop(res);
 
             std::string outFile = outDir + files[i].substr(files[0].find_last_of("/\\"));
 
+            auto w = Profiler::start();
             imageOut.save(outFile, quality);
+            writeProf += Profiler::stop(w);
         }
     }
 
-    Profiler::stop("resizeCL");
+    profiler["read"] += readProf;
+    profiler["write"] += writeProf;
+    profiler["resize"] += resizeProf;
 }
 
 
@@ -92,10 +105,8 @@ void Resizer::resize(const std::string& inputDir, const std::string& outputDir, 
 #include <opencv2/highgui/highgui.hpp>
 
 void Resizer::resizeCV(const std::string &inputDir, const std::string &outputDir, float ratio, int quality,
-                       const std::string &options)
+                       const std::string &options, std::unordered_map<std::string, float>& profiler)
 {
-    Profiler::start("resizeCV");
-
     using namespace cv;
 
     std::vector<std::string> files;
@@ -126,13 +137,16 @@ void Resizer::resizeCV(const std::string &inputDir, const std::string &outputDir
     std::vector<int> compression_params;
     compression_params.push_back(IMWRITE_JPEG_QUALITY);
     compression_params.push_back(quality);
-//    compression_params.push_back(IMWRITE_JPEG_PROGRESSIVE);
-//    compression_params.push_back(1);
-//    compression_params.push_back(IMWRITE_JPEG_OPTIMIZE);
-//    compression_params.push_back(1);
-//
+
+    auto readProf = 0;
+    auto writeProf = 0;
+    auto resizeProf = 0;
+
     for (int i=0; i<files.size(); i++)
     {
+        profiler["op"] += 1;
+
+        auto r = Profiler::start();
         imageIn = imread(files[i]);
 
         if(!imageIn.data)
@@ -141,12 +155,20 @@ void Resizer::resizeCV(const std::string &inputDir, const std::string &outputDir
             return;
         }
 
+        readProf += Profiler::stop(r);
+
+        auto res = Profiler::start();
         cv::resize(imageIn, imageOut, cv::Size(imageIn.cols * ratio, imageIn.rows * ratio), 0, 0, INTER_CUBIC);
+        resizeProf += Profiler::stop(res);
 
         std::string outFile = outDir + files[i].substr(files[0].find_last_of("/\\"));
 
+        auto w = Profiler::start();
         imwrite(outFile, imageOut, compression_params);
+        writeProf += Profiler::stop(w);
     }
 
-    Profiler::stop("resizeCV");
+    profiler["read"] += readProf;
+    profiler["write"] += writeProf;
+    profiler["resize"] += resizeProf;
 }

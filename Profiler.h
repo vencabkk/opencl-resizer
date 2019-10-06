@@ -27,6 +27,17 @@ public:
         m_clocks.erase(clock_curr);
     }
 
+    static clock_t start()
+    {
+        return clock();
+    }
+
+    static unsigned long stop(clock_t start)
+    {
+        auto ms = float(clock() - start) / CLOCKS_PER_SEC * 1000.0f;
+        return ms;
+    }
+
 private:
 
     static std::unordered_map<std::string, clock_t> m_clocks;
