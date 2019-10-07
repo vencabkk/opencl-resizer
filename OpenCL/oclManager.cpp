@@ -57,9 +57,9 @@ bool oclManager::createContext(DeviceType type)
         m_context = cl::Context({m_device});
         m_queue = cl::CommandQueue(m_context, m_device);
 
-        std::cout << "Using platform: " << m_platform.getInfo<CL_PLATFORM_VENDOR>() << std::endl;
-        std::cout << "Using device: " << m_device.getInfo<CL_DEVICE_NAME>() << std::endl;
-        std::cout << "Using version: " << m_device.getInfo<CL_DEVICE_VERSION>() << std::endl;
+//        std::cout << "Using platform: " << m_platform.getInfo<CL_PLATFORM_VENDOR>() << std::endl;
+//        std::cout << "Using device: " << m_device.getInfo<CL_DEVICE_NAME>() << std::endl;
+//        std::cout << "Using version: " << m_device.getInfo<CL_DEVICE_VERSION>() << std::endl;
 
         return true;
     }
@@ -72,7 +72,7 @@ bool oclManager::createContext(DeviceType type)
 
 bool oclManager::addKernelProgram(const std::string &kernel)
 {
-    m_program = cl::Program(kernel);
+    m_program = cl::Program(m_context, kernel);
 
     try
     {
@@ -95,17 +95,14 @@ void oclManager::resizeImage(const Image& in, Image& out, float ratio, const std
         auto imageFormat = getImageFormat(in);
 
         // Create an OpenCL Image / texture and transfer data to the device
-        cl::Image2D clImageIn = cl::Image2D(m_context,
-                CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-                imageFormat,
-                in.getWidth(),
-                in.getHeight(),
-                0,
-                ((void*)in.getData().data()));
+        cl::Image2D clImageIn = cl::Image2D(m_context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, imageFormat,
+                                            in.getWidth(), in.getHeight(), 0, (void *) in.getData().data());
 
         struct CLImage
         {
-            CLImage(const Image& img, float ratio) : Width(img.getWidth() * ratio), Height(img.getHeight() * ratio) {}
+            CLImage(const Image &img, float ratio) : Width(img.getWidth() * ratio), Height(img.getHeight() * ratio)
+            {}
+
             unsigned Width;    ///< Width of the image, in pixels
             unsigned Height;   ///< Height of the image, in pixels
         };
@@ -114,33 +111,13 @@ void oclManager::resizeImage(const Image& in, Image& out, float ratio, const std
         CLImage sImageOut(in, ratio);
 
         // Create a buffer for the result
-        cl::Image2D clImageOut = cl::Image2D(m_context,
-                CL_MEM_WRITE_ONLY,
-                imageFormat,
-                sImageOut.Width,
-                sImageOut.Height,
-                0,
-                nullptr);
+        cl::Image2D clImageOut = cl::Image2D(m_context, CL_MEM_WRITE_ONLY, imageFormat, sImageOut.Width,
+                                             sImageOut.Height, 0, nullptr);
 
         // Run kernel
         cl::Kernel kernel = cl::Kernel(m_program, programEntry.c_str());
-
-        kernel.setArg(1, &clImageOut);
-//        kernel.setArg(0, clImageIn);
-/*
-        ::clSetKernelArg(
-                kernel.operator()(),
-                0,
-                sizeof(clImageIn),
-                &clImageIn);
-
-
-        ::clSetKernelArg(
-                kernel.operator()(),
-                1,
-                sizeof(clImageOut),
-                &clImageOut);
-*/
+        kernel.setArg(0, clImageIn);
+        kernel.setArg(1, clImageOut);
         kernel.setArg(2, sImageIn);
         kernel.setArg(3, sImageOut);
         kernel.setArg(4, ratio);
@@ -162,13 +139,13 @@ void oclManager::resizeImage(const Image& in, Image& out, float ratio, const std
         region[1] = sImageOut.Height;
         region[2] = 1;
 
-        const unsigned int size (sImageOut.Width*sImageOut.Height*in.getChannels());
+        const unsigned int size(sImageOut.Width * sImageOut.Height * in.getChannels());
         out.setData(new unsigned char[size], size, sImageOut.Width, sImageOut.Height);
-        m_queue.enqueueReadImage(clImageOut, CL_TRUE, origin, region, 0, 0, (void*)out.getData().data());
+        m_queue.enqueueReadImage(clImageOut, CL_TRUE, origin, region, 0, 0, (void *) out.getData().data());
     }
     catch (cl::Error& err)
     {
-        std::cerr << "Error running CL kernel: " << err.what() << " " << getCLErrorString(err.err()) << std::endl;
+        std::cerr << "Error running kernel: " << err.what() << " " << getCLErrorString(err.err()) << std::endl;
     }
 }
 
