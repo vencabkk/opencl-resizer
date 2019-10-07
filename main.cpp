@@ -81,7 +81,7 @@ int main(int argc, const char * argv[])
         return "+" + std::to_string(ratio * -1) + "%";
     };
 
-    for (auto i=0; i< 5; i++)
+//    for (auto i=0; i< 5; i++)
     {
         Resizer::resizeCV(inputDir, outputDir, ratio, quality, algo, profilerCV);
         Resizer::resizeCL(inputDir, outputDir, ratio, quality, algo, profilerCL);

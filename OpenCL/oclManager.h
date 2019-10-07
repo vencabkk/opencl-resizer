@@ -5,6 +5,7 @@
 
 #pragma once
 
+#define __CL_ENABLE_EXCEPTIONS
 #if defined(__APPLE__) || defined(__MACOSX)
 #include "cl.hpp"
 #else
@@ -44,4 +45,5 @@ protected:
 	cl::Device          m_device;
     cl::Context         m_context;
     cl::Program         m_program;
+    cl::CommandQueue    m_queue;
 };

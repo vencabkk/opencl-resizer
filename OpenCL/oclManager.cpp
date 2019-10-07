@@ -55,6 +55,7 @@ bool oclManager::createContext(DeviceType type)
         setupPlatform(type);
 
         m_context = cl::Context({m_device});
+        m_queue = cl::CommandQueue(m_context, m_device);
 
         std::cout << "Using platform: " << m_platform.getInfo<CL_PLATFORM_VENDOR>() << std::endl;
         std::cout << "Using device: " << m_device.getInfo<CL_DEVICE_NAME>() << std::endl;
@@ -89,52 +90,86 @@ void oclManager::resizeImage(const Image& in, Image& out, float ratio, const std
 {
     assert(ratio > 0);
 
-    auto imageFormat = getImageFormat(in);
-
-    // Create an OpenCL Image / texture and transfer data to the device
-    cl::Image2D clImageIn = cl::Image2D(m_context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, imageFormat, in.getWidth(), in.getHeight(), 0, (void*)in.getData().data());
-
-    struct CLImage
+    try
     {
-        CLImage(const Image& img, float ratio) : Width(img.getWidth() * ratio), Height(img.getHeight() * ratio) {}
-        unsigned Width;    ///< Width of the image, in pixels
-        unsigned Height;   ///< Height of the image, in pixels
-    };
+        auto imageFormat = getImageFormat(in);
 
-    CLImage sImageIn(in, 1.0f);
-    CLImage sImageOut(in, ratio);
+        // Create an OpenCL Image / texture and transfer data to the device
+        cl::Image2D clImageIn = cl::Image2D(m_context,
+                CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                imageFormat,
+                in.getWidth(),
+                in.getHeight(),
+                0,
+                ((void*)in.getData().data()));
 
-    // Create a buffer for the result
-    cl::Image2D clImageOut = cl::Image2D(m_context, CL_MEM_WRITE_ONLY, imageFormat, sImageOut.Width, sImageOut.Height, 0, nullptr);
+        struct CLImage
+        {
+            CLImage(const Image& img, float ratio) : Width(img.getWidth() * ratio), Height(img.getHeight() * ratio) {}
+            unsigned Width;    ///< Width of the image, in pixels
+            unsigned Height;   ///< Height of the image, in pixels
+        };
 
-    // Run kernel
-    cl::Kernel kernel = cl::Kernel(m_program, programEntry.c_str());
-    kernel.setArg(0, clImageIn);
-    kernel.setArg(1, clImageOut);
-    kernel.setArg(2, sImageIn);
-    kernel.setArg(3, sImageOut);
-    kernel.setArg(4, ratio);
-    kernel.setArg(5, ratio);
+        CLImage sImageIn(in, 1.0f);
+        CLImage sImageOut(in, ratio);
 
-    cl::CommandQueue::getDefault().enqueueNDRangeKernel(
-            kernel,
-            cl::NullRange,
-            cl::NDRange(Utils::maximum(sImageIn.Width, sImageOut.Width), Utils::maximum(sImageIn.Width, sImageOut.Height)),
-            cl::NullRange
-    );
+        // Create a buffer for the result
+        cl::Image2D clImageOut = cl::Image2D(m_context,
+                CL_MEM_WRITE_ONLY,
+                imageFormat,
+                sImageOut.Width,
+                sImageOut.Height,
+                0,
+                nullptr);
 
-    cl::size_t<3> origin;
-    cl::size_t<3> region;
-    origin[0] = 0;
-    origin[1] = 0;
-    origin[2] = 0;
-    region[0] = sImageOut.Width;
-    region[1] = sImageOut.Height;
-    region[2] = 1;
+        // Run kernel
+        cl::Kernel kernel = cl::Kernel(m_program, programEntry.c_str());
 
-    const unsigned int size (sImageOut.Width*sImageOut.Height*in.getChannels());
-    out.setData(new unsigned char[size], size, sImageOut.Width, sImageOut.Height);
-    cl::CommandQueue::getDefault().enqueueReadImage(clImageOut, CL_TRUE, origin, region, 0, 0, (void*)out.getData().data());
+        kernel.setArg(1, &clImageOut);
+//        kernel.setArg(0, clImageIn);
+/*
+        ::clSetKernelArg(
+                kernel.operator()(),
+                0,
+                sizeof(clImageIn),
+                &clImageIn);
+
+
+        ::clSetKernelArg(
+                kernel.operator()(),
+                1,
+                sizeof(clImageOut),
+                &clImageOut);
+*/
+        kernel.setArg(2, sImageIn);
+        kernel.setArg(3, sImageOut);
+        kernel.setArg(4, ratio);
+        kernel.setArg(5, ratio);
+
+        m_queue.enqueueNDRangeKernel(
+                kernel,
+                cl::NullRange,
+                cl::NDRange(Utils::maximum(sImageIn.Width, sImageOut.Width), Utils::maximum(sImageIn.Width, sImageOut.Height)),
+                cl::NullRange
+        );
+
+        cl::size_t<3> origin;
+        cl::size_t<3> region;
+        origin[0] = 0;
+        origin[1] = 0;
+        origin[2] = 0;
+        region[0] = sImageOut.Width;
+        region[1] = sImageOut.Height;
+        region[2] = 1;
+
+        const unsigned int size (sImageOut.Width*sImageOut.Height*in.getChannels());
+        out.setData(new unsigned char[size], size, sImageOut.Width, sImageOut.Height);
+        m_queue.enqueueReadImage(clImageOut, CL_TRUE, origin, region, 0, 0, (void*)out.getData().data());
+    }
+    catch (cl::Error& err)
+    {
+        std::cerr << "Error running CL kernel: " << err.what() << " " << getCLErrorString(err.err()) << std::endl;
+    }
 }
 
 cl::ImageFormat oclManager::getImageFormat(const Image& img) const

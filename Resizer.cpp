@@ -107,6 +107,7 @@ void Resizer::resizeCL(const std::string& inputDir, const std::string& outputDir
 void Resizer::resizeCV(const std::string &inputDir, const std::string &outputDir, float ratio, int quality,
                        const std::string &options, std::unordered_map<std::string, float>& profiler)
 {
+    /*
     using namespace cv;
 
     std::vector<std::string> files;
@@ -171,4 +172,5 @@ void Resizer::resizeCV(const std::string &inputDir, const std::string &outputDir
     profiler["read"] += readProf;
     profiler["write"] += writeProf;
     profiler["resize"] += resizeProf;
+     */
 }
