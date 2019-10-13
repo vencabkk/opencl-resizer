@@ -37,3 +37,4 @@ You need C++ compiler and following libraries:
 * Libjpeg Turbo
 * CMake
 
+See CMakeList.txt for further adjustments of libraries path.
