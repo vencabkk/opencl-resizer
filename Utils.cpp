@@ -6,7 +6,6 @@
 #include "Utils.h"
 #include "Profiler.h"
 #include <sys/types.h>
-#include <sys/stat.h>
 
 #if defined(WIN32)
 #include <direct.h>
@@ -14,6 +13,7 @@
 #elif defined(__APPLE__) || defined(__MACOSX)
 #include <dirent.h>
 #include <mach-o/dyld.h>
+#include <sys/stat.h>
 #endif
 
 std::unordered_map<std::string, clock_t> Profiler::m_clocks;

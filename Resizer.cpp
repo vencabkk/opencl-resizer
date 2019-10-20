@@ -158,7 +158,7 @@ void Resizer::resizeCV(const std::string &inputDir, const std::string &outputDir
         readProf += Profiler::stop(r);
 
         auto res = Profiler::start();
-        cv::resize(imageIn, imageOut, cv::Size(imageIn.cols * ratio, imageIn.rows * ratio), 0, 0, INTER_CUBIC);
+        resize(imageIn, imageOut, Size(imageIn.cols * ratio, imageIn.rows * ratio), 0, 0, INTER_CUBIC);
         resizeProf += Profiler::stop(res);
 
         std::string outFile = outDir + files[i].substr(files[0].find_last_of("/\\"));
