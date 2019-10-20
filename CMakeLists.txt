@@ -15,8 +15,8 @@ endif (APPLE)
 
 #windows specific
 if (WIN32)
-    include_directories("c:/libjpeg-turbo-gcc/include")
-    include_directories("c:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.1/include")
+    include_directories("c:/libjpeg-turbo/include")
+    include_directories("c:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/include")
     include_directories("c:/opencv/include/")
 endif (WIN32)
 
@@ -44,7 +44,7 @@ endif (APPLE)
 
 #windows specific
 if (WIN32)
-    target_link_libraries(resizer "c:/libjpeg-turbo-gcc/lib/libturbojpeg.a")
-    target_link_libraries(resizer "c:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.1/lib/Win32/OpenCL.lib")
-    target_link_libraries(resizer "c:/opencv/x64/vc14/lib/opencv_world411.lib")
+    target_link_libraries(resizer "c:/libjpeg-turbo/lib/turbojpeg-static.lib")
+    target_link_libraries(resizer "c:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/lib/x64/OpenCL.lib")
+    target_link_libraries(resizer "c:/opencv/x64/vc15/lib/opencv_world411.lib")
 endif (WIN32)
